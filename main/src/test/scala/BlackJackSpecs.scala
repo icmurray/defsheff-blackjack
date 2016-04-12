@@ -26,6 +26,23 @@ class BlackJackSpecs extends Specification {
       "10H QC AS = 21" >> { parseHandForValue("10H QC AS") must_== Score(21) }
     }
 
+    "Dealing" >> {
+      "Lone dealer" >> {
+        val deck = standardDeck
+        initialDeal(0)(deck) must_== ((deck.take(2), Nil, deck.drop(2)))
+      }
+
+      "Dealer deals themselves last" >> {
+        val deck = (1 to 10).toList
+        initialDeal(1)(deck) must_== ((List(2,4), List(List(1,3)), (5 to 10).toList))
+      }
+
+      "2 Players plus the dealer" >> {
+        val deck = (1 to 10).toList
+        initialDeal(2)(deck) must_== ((List(3,6), List(List(1,4), List(2,5)), (7 to 10).toList))
+      }
+    }
+
   }
 
   private def parseHandForValue(s: String) = BlackJack.handOutcome(parseHand(s))
