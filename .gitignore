@@ -1,0 +1,7 @@
+# VIM files
+.*.swp
+tags
+
+# SBT
+target/
+.lib-src/
