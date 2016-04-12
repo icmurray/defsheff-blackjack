@@ -1,6 +1,7 @@
 package defsheff
 
 import scalaz._
+import scalaz.concurrent._
 import Scalaz._
 
 object BlackJack {
@@ -25,6 +26,16 @@ object BlackJack {
 
   case class Card(rank: Rank, suit: Suit)
   type Hand = List[Card]
+  type Deck = List[Card]
+
+  val standardDeck = for {
+    suit <- List(Clubs, Diamonds, Hearts, Spades)
+    rank <- (2 to 10).map(NC) ++ List(Jack, Queen, King, Ace)
+  } yield Card(rank, suit)
+
+  def shuffleDeck(d: Deck): Task[Deck] = Task.now {
+    scala.util.Random.shuffle(d)
+  }
 
   def cardValue(c: Card) = c.rank match {
     case NC(r)     => List(r)
