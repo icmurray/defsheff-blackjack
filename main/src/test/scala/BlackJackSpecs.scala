@@ -8,27 +8,27 @@ class BlackJackSpecs extends Specification {
 
   "BlackJack" >> {
     "Hand Scores" >> {
-      "2H 2C = 4" >> { parseHandForValue("2H 2C") must_== (4) }
-      "2H 2C 2D 2S = 8" >> { parseHandForValue("2H 2C 2D 2S") must_== (8) }
-      "2H 2C 7S 8D = 19" >> { parseHandForValue("2H 2C 7S 8D") must_== (19) }
-      "KH 5C 6S = 21" >> { parseHandForValue("KH 5C 6S") must_== (21) }
-      "KH QC 3S = 23" >> { parseHandForValue("KH QC 3S") must_== (23) }
-      "9H AC 3S KS = 23" >> { parseHandForValue("9H AC 3S KS") must_== (23) }
-      "JH 8C 9S = 27" >> { parseHandForValue("JH 8C 9S") must_== (27) }
-      "AS KS = 21" >> { parseHandForValue("AS KS") must_== (21) }
-      "AS 5H = 16" >> { parseHandForValue("AS 5H") must_== (16) }
-      "AS 5H 7C = 13" >> { parseHandForValue("AS 5H 7C") must_== (13) }
-      "AS AC = 12" >> { parseHandForValue("AS AC") must_== (12) }
-      "AS AC AD AH = 14" >> { parseHandForValue("AS AC AD AH") must_== (14) }
-      "AS AC KC = 12" >> { parseHandForValue("AS AC KC") must_== (12) }
-      "AS AC AH AD KC = 14" >> { parseHandForValue("AS AC AH AD KC") must_== (14) }
-      "AS AC AH AD KC JH = 24" >> { parseHandForValue("AS AC AH AD KC JH") must_== (24) }
-      "10H QC AS = 21" >> { parseHandForValue("10H QC AS") must_== (21) }
+      "2H 2C = 4" >> { parseHandForValue("2H 2C") must_== Score(4) }
+      "2H 2C 2D 2S = 8" >> { parseHandForValue("2H 2C 2D 2S") must_== Score(8) }
+      "2H 2C 7S 8D = 19" >> { parseHandForValue("2H 2C 7S 8D") must_== Score(19) }
+      "KH 5C 6S = 21" >> { parseHandForValue("KH 5C 6S") must_== Score(21) }
+      "KH QC 3S = 23" >> { parseHandForValue("KH QC 3S") must_== Bust(23) }
+      "9H AC 3S KS = 23" >> { parseHandForValue("9H AC 3S KS") must_== Bust(23) }
+      "JH 8C 9S = 27" >> { parseHandForValue("JH 8C 9S") must_== Bust(27) }
+      "AS KS = 21" >> { parseHandForValue("AS KS") must_== Score(21) }
+      "AS 5H = 16" >> { parseHandForValue("AS 5H") must_== Score(16) }
+      "AS 5H 7C = 13" >> { parseHandForValue("AS 5H 7C") must_== Score(13) }
+      "AS AC = 12" >> { parseHandForValue("AS AC") must_== Score(12) }
+      "AS AC AD AH = 14" >> { parseHandForValue("AS AC AD AH") must_== Score(14) }
+      "AS AC KC = 12" >> { parseHandForValue("AS AC KC") must_== Score(12) }
+      "AS AC AH AD KC = 14" >> { parseHandForValue("AS AC AH AD KC") must_== Score(14) }
+      "AS AC AH AD KC JH = 24" >> { parseHandForValue("AS AC AH AD KC JH") must_== Bust(24) }
+      "10H QC AS = 21" >> { parseHandForValue("10H QC AS") must_== Score(21) }
     }
 
   }
 
-  private def parseHandForValue(s: String) = BlackJack.handValue(parseHand(s))
+  private def parseHandForValue(s: String) = BlackJack.handOutcome(parseHand(s))
   private def parseHand(s: String) = s.split(" ").map(parseCard).toList
   private def parseCard(s: String) = {
     val CardMatch = """(\d+|[AJQK])([HCDS])""" .r

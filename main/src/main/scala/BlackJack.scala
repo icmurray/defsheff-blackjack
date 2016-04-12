@@ -18,6 +18,11 @@ object BlackJack {
   case object King extends Rank
   case object Ace extends Rank
 
+  sealed trait Outcome { def value: Int }
+  case class Score(value: Int) extends Outcome
+  case class Bust(value: Int) extends Outcome
+  //case object BlackJack { def value = 21 }
+
   case class Card(rank: Rank, suit: Suit)
   type Hand = List[Card]
 
@@ -33,5 +38,12 @@ object BlackJack {
       case (Nil, bust) => bust.min
       case (legal, _)  => legal.max
     }
+
+  def handOutcome(hand: Hand): Outcome = {
+    handValue(hand) match {
+      case v if (v > 21)  => Bust(v)
+      case v if (v <= 21) => Score(v)
+    }
+  }
 
 }
