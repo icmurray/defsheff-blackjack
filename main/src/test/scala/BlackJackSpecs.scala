@@ -29,17 +29,17 @@ class BlackJackSpecs extends Specification {
     "Dealing" >> {
       "Lone dealer" >> {
         val deck = standardDeck
-        initialDeal(0)(deck) must_== ((deck.take(2), Nil, deck.drop(2)))
+        initialDeal(0)(deck) must_== ((List(deck.take(2)), deck.drop(2)))
       }
 
       "Dealer deals themselves last" >> {
         val deck = (1 to 10).toList
-        initialDeal(1)(deck) must_== ((List(2,4), List(List(1,3)), (5 to 10).toList))
+        initialDeal(1)(deck) must_== ((List(List(1,3), List(2,4)), (5 to 10).toList))
       }
 
       "2 Players plus the dealer" >> {
         val deck = (1 to 10).toList
-        initialDeal(2)(deck) must_== ((List(3,6), List(List(1,4), List(2,5)), (7 to 10).toList))
+        initialDeal(2)(deck) must_== ((List(List(1,4), List(2,5), List(3,6)), (7 to 10).toList))
       }
     }
 

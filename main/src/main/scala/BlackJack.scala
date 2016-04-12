@@ -27,7 +27,10 @@ object BlackJack {
   case class Card(rank: Rank, suit: Suit)
   type Hand = List[Card]
   type Deck = List[Card]
-  case class Table(dealer: Hand, players: List[Hand], deck: Deck)
+  case class Table(hands: List[Hand], deck: Deck) {
+    def dealer = hands.last
+    def players = hands.init
+  }
 
   val standardDeck = for {
     suit <- List(Clubs, Diamonds, Hearts, Spades)
@@ -38,16 +41,16 @@ object BlackJack {
     scala.util.Random.shuffle(d)
   }
 
-  def initialDeal[A](numPlayers: Int)(deck: List[A]): (List[A], List[List[A]], List[A]) = {
+  def initialDeal[A](numPlayers: Int)(deck: List[A]): (List[List[A]], List[A]) = {
     val numHands = numPlayers+1
     val remainingDeck = deck.drop(numHands*2)
     val dealt = deck.sliding(numHands, numHands).take(2).toList.transpose
-    (dealt.last, dealt.init, remainingDeck)
+    (dealt, remainingDeck)
   }
 
   def initialTable(numPlayers: Int)(deck: Deck) = {
-    val (dealer, players, remaining) = initialDeal[Card](numPlayers)(deck)
-    Table(dealer, players, remaining)
+    val (hands, remaining) = initialDeal[Card](numPlayers)(deck)
+    Table(hands, remaining)
   }
 
   def cardValue(c: Card) = c.rank match {
