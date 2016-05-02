@@ -2,9 +2,9 @@ package defsheff
 
 import org.specs2.mutable.Specification
 
-class BlackJackSpecs extends Specification {
+class blackjackSpecs extends Specification {
 
-  import BlackJack._
+  import blackjack._
 
   "BlackJack" >> {
     "Hand Scores" >> {
@@ -15,7 +15,7 @@ class BlackJackSpecs extends Specification {
       "KH QC 3S = 23" >> { parseHandForValue("KH QC 3S") must_== Bust(23) }
       "9H AC 3S KS = 23" >> { parseHandForValue("9H AC 3S KS") must_== Bust(23) }
       "JH 8C 9S = 27" >> { parseHandForValue("JH 8C 9S") must_== Bust(27) }
-      "AS KS = 21" >> { parseHandForValue("AS KS") must_== BJ }
+      "AS KS = 21" >> { parseHandForValue("AS KS") must_== Blackjack }
       "AS 5H = 16" >> { parseHandForValue("AS 5H") must_== Score(16) }
       "AS 5H 7C = 13" >> { parseHandForValue("AS 5H 7C") must_== Score(13) }
       "AS AC = 12" >> { parseHandForValue("AS AC") must_== Score(12) }
@@ -45,7 +45,7 @@ class BlackJackSpecs extends Specification {
 
   }
 
-  private def parseHandForValue(s: String) = BlackJack.handOutcome(parseHand(s))
+  private def parseHandForValue(s: String) = blackjack.handOutcome(parseHand(s))
   private def parseHand(s: String) = s.split(" ").map(parseCard).toList
   private def parseCard(s: String) = {
     val CardMatch = """(\d+|[AJQK])([HCDS])""" .r

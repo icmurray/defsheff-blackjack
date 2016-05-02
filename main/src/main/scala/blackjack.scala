@@ -4,7 +4,7 @@ import scalaz._
 import scalaz.concurrent._
 import Scalaz._
 
-object BlackJack {
+object blackjack {
 
   sealed trait Suit
   case object Clubs extends Suit
@@ -22,7 +22,7 @@ object BlackJack {
   sealed trait Outcome { def value: Int }
   case class Score(value: Int) extends Outcome
   case class Bust(value: Int) extends Outcome
-  case object BJ  extends Outcome { def value = 21 }
+  case object Blackjack  extends Outcome { def value = 21 }
 
   case class Card(rank: Rank, suit: Suit)
   type Hand = List[Card]
@@ -68,7 +68,7 @@ object BlackJack {
 
   def handOutcome(hand: Hand): Outcome = {
     handValue(hand) match {
-      case v if (isBlackJack(hand)) => BJ
+      case v if (isBlackJack(hand)) => Blackjack
       case v if (v > 21)  => Bust(v)
       case v if (v <= 21) => Score(v)
     }
