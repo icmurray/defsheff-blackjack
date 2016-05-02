@@ -5,22 +5,31 @@ import org.specs2.mutable.Specification
 
 import org.scalacheck._
 
+import data._
+
 class DeckSpec extends Specification with ScalaCheck {
+
+  "standard deck" >> {
+    "contains 52 unique cards" >> {
+      deck.standardDeck.toSet.size must_=== (52)
+    }
+  }
 
   "deal" >> {
 
-    case class ValidPrecondition(numPlayers: Int, handSize: Int, items: List[String]) {
+    case class ValidPrecondition(numPlayers: Int, handSize: Int, deck: Deck) {
       val cardsRequired = numPlayers * handSize
-      def undealt = items.drop(cardsRequired)
-      def deal = deck.deal(numPlayers, handSize)(items).get
+      def undealt = deck.drop(cardsRequired)
+      def deal = defsheff.deck.deal(numPlayers, handSize)(deck).get
     }
 
+    val CardGen = Gen.oneOf(deck.standardDeck)
     implicit val Arb = Arbitrary(
       for {
         numPlayers <- Gen.posNum[Int]
         handSize <- Gen.posNum[Int]
-        undealt <- Gen.listOf(Gen.alphaStr)
-        toDeal <- Gen.listOfN(numPlayers*handSize, Gen.alphaStr)
+        undealt <- Gen.listOf(CardGen)
+        toDeal <- Gen.listOfN(numPlayers*handSize, CardGen)
       } yield ValidPrecondition(numPlayers, handSize, toDeal ++ undealt)
     )
 
