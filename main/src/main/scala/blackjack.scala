@@ -8,11 +8,11 @@ import data._
 object blackjack {
 
   sealed trait Outcome { def value: Int }
-  case class Score(value: Int) extends Outcome
-  case class Bust(value: Int) extends Outcome
-  case object Blackjack  extends Outcome { def value = 21 }
+  final case class Score(value: Int) extends Outcome
+  final case class Bust(value: Int) extends Outcome
+  final case object Blackjack  extends Outcome { def value = 21 }
 
-  case class Table(hands: List[Hand], deck: Deck) {
+  final case class Table(hands: List[Hand], deck: Deck) {
     def dealer = hands.last
     def players = hands.init
   }
