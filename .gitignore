@@ -2,6 +2,21 @@
 .*.swp
 tags
 
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+TAGS
+
+# ENSIME
+.ensime
+.ensime_cache/
+
 # SBT
 target/
 .lib-src/
