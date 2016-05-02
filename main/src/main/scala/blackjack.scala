@@ -18,25 +18,11 @@ object blackjack {
     def players = hands.init
   }
 
-  val standardDeck = for {
-    suit <- List(Clubs, Diamonds, Hearts, Spades)
-    rank <- (2 to 10).map(NC) ++ List(Jack, Queen, King, Ace)
-  } yield Card(rank, suit)
-
-  def shuffleDeck(d: Deck): Task[Deck] = Task.now {
-    scala.util.Random.shuffle(d)
-  }
-
-  def initialDeal[A](numPlayers: Int)(deck: List[A]): (List[List[A]], List[A]) = {
-    val numHands = numPlayers+1
-    val remainingDeck = deck.drop(numHands*2)
-    val dealt = deck.sliding(numHands, numHands).take(2).toList.transpose
-    (dealt, remainingDeck)
-  }
+  def blackjackDeal(numPlayers: Int) = deck.deal(numPlayers+1, 2) _
 
   def initialTable(numPlayers: Int)(deck: Deck) = {
-    val (hands, remaining) = initialDeal[Card](numPlayers)(deck)
-    Table(hands, remaining)
+    blackjackDeal(numPlayers)(deck).
+      map((Table.apply _).tupled)
   }
 
   def cardValue(c: Card) = c.rank match {

@@ -16,9 +16,9 @@ object deck {
   } yield Card(rank, suit)
 
   /* Deal `handSize` items to the given number of players.  Return the undealt items too. */
-  def deal(numPlayers: Int, handSize: Int)(deck: Deck): Option[(List[Hand], Deck)] = {
-    val numCards = numPlayers * handSize
-    SeqUtils.partitionByDealing((numPlayers, deck.take(numCards)))
+  def deal(numHands: Int, handSize: Int)(deck: Deck): Option[(List[Hand], Deck)] = {
+    val numCards = numHands * handSize
+    SeqUtils.partitionByDealing((numHands, deck.take(numCards)))
       .map(dealt => (dealt, deck.drop(numCards)))
   }
 }

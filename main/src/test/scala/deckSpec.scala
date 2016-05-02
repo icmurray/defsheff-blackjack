@@ -17,10 +17,10 @@ class DeckSpec extends Specification with ScalaCheck {
 
   "deal" >> {
 
-    case class ValidPrecondition(numPlayers: Int, handSize: Int, deck: Deck) {
-      val cardsRequired = numPlayers * handSize
+    case class ValidPrecondition(numHands: Int, handSize: Int, deck: Deck) {
+      val cardsRequired = numHands * handSize
       def undealt = deck.drop(cardsRequired)
-      def deal = defsheff.deck.deal(numPlayers, handSize)(deck).get
+      def deal = defsheff.deck.deal(numHands, handSize)(deck).get
     }
 
     val CardGen = Gen.oneOf(deck.standardDeck)
