@@ -1,7 +1,6 @@
 package defsheff
 
 import scalaz._
-import scalaz.concurrent._
 import Scalaz._
 
 import data._
