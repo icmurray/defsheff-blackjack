@@ -5,6 +5,7 @@ import org.specs2.mutable.Specification
 class blackjackSpecs extends Specification {
 
   import blackjack._
+  import data._
 
   "BlackJack" >> {
     "Hand Scores" >> {

@@ -4,29 +4,15 @@ import scalaz._
 import scalaz.concurrent._
 import Scalaz._
 
+import data._
+
 object blackjack {
-
-  sealed trait Suit
-  case object Clubs extends Suit
-  case object Diamonds extends Suit
-  case object Hearts extends Suit
-  case object Spades extends Suit
-
-  sealed trait Rank
-  case class NC(r: Int) extends Rank { assert ((2 <= r) && (r <= 10)) }
-  case object Jack extends Rank
-  case object Queen extends Rank
-  case object King extends Rank
-  case object Ace extends Rank
 
   sealed trait Outcome { def value: Int }
   case class Score(value: Int) extends Outcome
   case class Bust(value: Int) extends Outcome
   case object Blackjack  extends Outcome { def value = 21 }
 
-  case class Card(rank: Rank, suit: Suit)
-  type Hand = List[Card]
-  type Deck = List[Card]
   case class Table(hands: List[Hand], deck: Deck) {
     def dealer = hands.last
     def players = hands.init
