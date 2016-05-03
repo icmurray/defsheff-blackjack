@@ -1,4 +1,7 @@
 package defsheff
+
+import scalaz.NonEmptyList
+
 package data {
 
   final case class Card(rank: Rank, suit: Suit)
@@ -20,6 +23,6 @@ package data {
 
 /* Type aliases that can't be defined at the top-level */
 package object data {
-  type Hand = List[Card]
+  type Hand = NonEmptyList[Card]
   type Deck = List[Card]
 }

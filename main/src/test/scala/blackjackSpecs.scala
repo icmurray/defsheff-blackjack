@@ -1,5 +1,7 @@
 package defsheff
 
+import scalaz.NonEmptyList
+
 import org.specs2.mutable.Specification
 
 class blackjackSpecs extends Specification {
@@ -31,7 +33,7 @@ class blackjackSpecs extends Specification {
     "Dealing Blackjack" >> {
       "Lone dealer" >> {
         val deck = standardDeck
-        blackjackDeal(0)(deck) must beSome (be_==((List(deck.take(2)), deck.drop(2))))
+        blackjackDeal(0)(deck) must beSome (be_==((List(deck.take(2).toNelUnsafe), deck.drop(2))))
       }
 
       //"Dealer deals themselves last" >> {
@@ -48,7 +50,7 @@ class blackjackSpecs extends Specification {
   }
 
   private def parseHandForValue(s: String) = blackjack.handOutcome(parseHand(s))
-  private def parseHand(s: String) = s.split(" ").map(parseCard).toList
+  private def parseHand(s: String) = s.split(" ").map(parseCard).toList.toNelUnsafe
   private def parseCard(s: String) = {
     val CardMatch = """(\d+|[AJQK])([HCDS])""" .r
     s match {
@@ -65,6 +67,12 @@ class blackjackSpecs extends Specification {
     case "D" => Diamonds
     case "H" => Hearts
     case "S" => Spades
+  }
+
+  private implicit class ListOps[A](l: List[A]) {
+    def toNelUnsafe: NonEmptyList[A] = l match {
+      case head :: tail => NonEmptyList(head, tail:_*)
+    }
   }
 
 }

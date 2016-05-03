@@ -25,17 +25,17 @@ object blackjack {
   }
 
   def cardValue(c: Card) = c.rank match {
-    case NC(r)     => List(r)
-    case Ace       => List(1, 11)
-    case otherwise => List(10)
+    case NC(r)     => NonEmptyList(r)
+    case Ace       => NonEmptyList(1, 11)
+    case otherwise => NonEmptyList(10)
   }
 
-  def handValue(hand: Hand): Int =
-    hand.map(cardValue).sequence.map(_.sum).partition(_ <= 21) match {
-      case (Nil, Nil)  => 0   // ????
-      case (Nil, bust) => bust.min
-      case (legal, _)  => legal.max
+  def handValue(hand: Hand): Int = {
+    hand.map(cardValue).sequence.map(_.sumr).partition(_ <= 21) match {
+      case (Nil,  bust) => bust.min
+      case (legal, _)   => legal.max
     }
+  }
 
   def handOutcome(hand: Hand): Outcome = {
     handValue(hand) match {
@@ -47,4 +47,7 @@ object blackjack {
 
   def isBlackJack(hand: Hand) = handValue(hand) == 21 && hand.length == 2
 
+  private implicit class NelOps[A](nel: NonEmptyList[A]) {
+    def partition(pred: A => Boolean): (List[A], List[A]) = nel.list.toList.partition(pred)
+  }
 }
