@@ -28,9 +28,13 @@ object deck {
   def deal(numHands: Int, handSize: Int)(deck: Deck): Option[(List[Hand], Deck)] = {
     require(numHands > 0 && handSize > 0, "Dealing requires at least 1 hand of at least 1 card")
     val numCards = numHands * handSize
-    SeqUtils.partitionByDealing((numHands, deck.take(numCards)))
-      .flatMap(hands => hands.map(toNel).sequence)
-      .map(hands => (hands, deck.drop(numCards)))
+    deck.take(numCards) match {
+      case toDeal if (toDeal.length < numCards) => None
+      case toDeal =>
+        SeqUtils.partitionByDealing((numHands, toDeal))
+          .flatMap(hands => hands.map(toNel).sequence)
+          .map(hands => (hands, deck.drop(numCards)))
+    }
   }
 
   private def toNel[A](xs: List[A]): Option[NonEmptyList[A]] = xs match {
