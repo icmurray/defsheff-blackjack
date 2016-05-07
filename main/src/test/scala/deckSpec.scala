@@ -25,6 +25,10 @@ class DeckSpec extends Specification with ScalaCheck {
       test.deal._2 must_=== (test.undealt)
     }
 
+    "returns the requested number of hands" >> prop { (test: ValidPrecondition) =>
+      test.deal._1.length must_=== (test.numHands)
+    }
+
     "invalid arguments result in None" >> prop { (invalid: InvalidPrecondition) =>
       invalid.deal must beNone
     }

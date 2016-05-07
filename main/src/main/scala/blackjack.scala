@@ -12,16 +12,14 @@ object blackjack {
   final case class Bust(value: Int) extends Outcome
   final case object Blackjack  extends Outcome { def value = 21 }
 
-  final case class Table(hands: List[Hand], deck: Deck) {
-    def dealer = hands.last
-    def players = hands.init
-  }
+  final case class Table(dealer: Hand, player: Hand, deck: Deck)
 
   def blackjackDeal(numPlayers: Int) = deck.deal(numPlayers+1, 2) _
 
-  def initialTable(numPlayers: Int)(deck: Deck) = {
-    blackjackDeal(numPlayers)(deck).
-      map((Table.apply _).tupled)
+  def initialTable(deck: Deck) = {
+    blackjackDeal(2)(deck).map { r => (r: @unchecked) match {
+      case (hand1 :: hand2 :: Nil, undealt) => Table(dealer=hand2, player=hand1, deck=undealt)
+    }}
   }
 
   def cardValue(c: Card) = c.rank match {
