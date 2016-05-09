@@ -14,35 +14,43 @@ import deck.{deal, dealOne}
 
 object blackjack {
 
+  /** Outcome of a single Hand **/
   sealed trait Outcome { def value: Int }
   final case class Score(value: Int) extends Outcome
   final case class Bust(value: Int) extends Outcome
   final case object Blackjack  extends Outcome { def value = 21 }
 
+  /** A player's decision **/
   sealed trait Decision
   case object Hit extends Decision
   case object Stand extends Decision
 
+  /** State of the hands in play, and the deck **/
   final case class Table(dealer: Hand, player: Hand, deck: Deck)
   object Table {
-    // Lenses
     val deckL   = GenLens[Table](_.deck)
     val playerL = GenLens[Table](_.player)
     val dealerL = GenLens[Table](_.dealer)
   }
 
+  /** GameState tracks the Table, and who is currently active **/
   sealed trait GameState { def table: Table }
   final case class PlayerTurn(table: Table) extends GameState
   final case class DealerTurn(table: Table) extends GameState
 
+  /** Distinct from the GameState is a game with no further actions **/
   final case class GameFinished(table: Table)
 
+  /** The effect data-type the game runs in.
+    * Isomorphic to Task[Option[A]], where Task captures any unpure IO, and
+    * Option captures any failures (eg. - deck runs out of cards).
+    */
   type Game[A] = OptionT[Task,A]
 
   /** Deal a new card to the active player.
     * Un-decided about the merits of defining this function with these type bounds.
-    * Potentially unsafe if I mess up the function definition, as I don't know how
-    *  to implement it without the typecasts.
+    * Potentially unsafe if I mess up the function definition, but I don't know how
+    * to implement it without the typecasts.
     */
   def hit[S <: GameState](game: S): Option[S] = {
 
@@ -58,13 +66,15 @@ object blackjack {
     }
   }
 
-  // Method over-loading. Hmm...
+  /** Standing just means transitioning to the next state.
+    * Method over-loading. Hmm... bad practice, but useful in this case.
+    */
   def stand(state: PlayerTurn): DealerTurn = DealerTurn(state.table)
   def stand(state: DealerTurn): GameFinished = GameFinished(state.table)
 
-  def promptHitOrStand: Task[Decision] = {
+  val promptHitOrStand: Task[Decision] = {
     import scala.io.StdIn.readLine
-    Task.delay(readLine("[H]it or [S]tand? ")).flatMap {
+    Task.delay(readLine("[H]it or [S]tand? ").toUpperCase).flatMap {
       case "H"       => Task.now(Hit)
       case "S"       => Task.now(Stand)
       case otherwise => promptHitOrStand
