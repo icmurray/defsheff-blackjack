@@ -39,17 +39,23 @@ object blackjack {
 
   type Game[A] = OptionT[Task,A]
 
-  private def hit(activeHand: Lens[Table,Hand])(table: Table): Option[Table] = {
-    val updateHandAndDeck = ((card: Card, deck: Deck) =>
-      activeHand.modify(card <:: _) compose Table.deckL.set(deck)).tupled
-    dealOne(table.deck).map(updateHandAndDeck(_)(table))
-  }
+  /** Deal a new card to the active player.
+    * Un-decided about the merits of defining this function with these type bounds.
+    * Potentially unsafe if I mess up the function definition, as I don't know how
+    *  to implement it without the typecasts.
+    */
+  def hit[S <: GameState](game: S): Option[S] = {
 
-  // Un-decided about the merits of defining this function with these type bounds.
-  // Potentially unsafe.
-  def hit[S <: GameState](game: S): Option[S] = game match {
-    case PlayerTurn(table) => hit(Table.playerL)(table).map(PlayerTurn(_).asInstanceOf[S])
-    case DealerTurn(table) => hit(Table.dealerL)(table).map(DealerTurn.apply(_).asInstanceOf[S])
+    def dealTo(activeHand: Lens[Table,Hand]): Option[Table] = {
+      val updateHandAndDeck = ((card: Card, deck: Deck) =>
+        activeHand.modify(card <:: _) compose Table.deckL.set(deck)).tupled
+      dealOne(game.table.deck).map(updateHandAndDeck(_)(game.table))
+    }
+
+    game match {
+      case PlayerTurn(_) => dealTo(Table.playerL).map(PlayerTurn(_).asInstanceOf[S])
+      case DealerTurn(_) => dealTo(Table.dealerL).map(DealerTurn.apply(_).asInstanceOf[S])
+    }
   }
 
   // Method over-loading. Hmm...
