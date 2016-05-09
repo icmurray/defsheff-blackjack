@@ -1,9 +1,16 @@
 package defsheff
 
-import scalaz._
+import scala.language.higherKinds
+
+import scalaz.{Lens => _, _} // Hide scalaz.Lens
+import scalaz.concurrent._
 import Scalaz._
 
+import monocle._
+import monocle.macros._
+
 import data._
+import deck.{deal, dealOne}
 
 object blackjack {
 
@@ -12,12 +19,118 @@ object blackjack {
   final case class Bust(value: Int) extends Outcome
   final case object Blackjack  extends Outcome { def value = 21 }
 
-  final case class Table(dealer: Hand, player: Hand, deck: Deck)
+  sealed trait Decision
+  case object Hit extends Decision
+  case object Stand extends Decision
 
-  def blackjackDeal(numPlayers: Int) = deck.deal(numPlayers+1, 2) _
+  final case class Table(dealer: Hand, player: Hand, deck: Deck)
+  object Table {
+    // Lenses
+    val deckL   = GenLens[Table](_.deck)
+    val playerL = GenLens[Table](_.player)
+    val dealerL = GenLens[Table](_.dealer)
+  }
+
+  sealed trait GameState { def table: Table }
+  final case class PlayerTurn(table: Table) extends GameState
+  final case class DealerTurn(table: Table) extends GameState
+
+  final case class GameFinished(table: Table)
+
+  type Game[A] = OptionT[Task,A]
+
+  private def hit(activeHand: Lens[Table,Hand])(table: Table): Option[Table] = {
+    val updateHandAndDeck = ((card: Card, deck: Deck) =>
+      activeHand.modify(card <:: _) compose Table.deckL.set(deck)).tupled
+    dealOne(table.deck).map(updateHandAndDeck(_)(table))
+  }
+
+  // Un-decided about the merits of defining this function with these type bounds.
+  // Potentially unsafe.
+  def hit[S <: GameState](game: S): Option[S] = game match {
+    case PlayerTurn(table) => hit(Table.playerL)(table).map(PlayerTurn(_).asInstanceOf[S])
+    case DealerTurn(table) => hit(Table.dealerL)(table).map(DealerTurn.apply(_).asInstanceOf[S])
+  }
+
+  // Method over-loading. Hmm...
+  def stand(state: PlayerTurn): DealerTurn = DealerTurn(state.table)
+  def stand(state: DealerTurn): GameFinished = GameFinished(state.table)
+
+  def promptHitOrStand: Task[Decision] = {
+    import scala.io.StdIn.readLine
+    Task.delay(readLine("[H]it or [S]tand? ")).flatMap {
+      case "H"       => Task.now(Hit)
+      case "S"       => Task.now(Stand)
+      case otherwise => promptHitOrStand
+    }
+  }
+
+  def showState(state: GameState): String = state match {
+    case PlayerTurn(Table(dealer, player, deck)) =>
+      s"You: $player\t Dealer: <redacted>"
+    case DealerTurn(Table(dealer, player, deck)) =>
+      s"You: $player\t Dealer: $dealer"
+  }
+
+  def playerTurn(state: PlayerTurn): Game[DealerTurn] = {
+
+    val printState: Game[Unit] = OptionT.some(println(showState(state)))
+    val handleStand: Game[DealerTurn] = OptionT.some(stand(state))
+    val handleHit: Game[DealerTurn] = {
+      hit(state) match {
+        case None => OptionT.none
+        case Some(PlayerTurn(table)) if (handValue(table.player) > 21) =>
+          OptionT.some(DealerTurn(table))
+        case Some(nextState@PlayerTurn(_)) =>
+          playerTurn(nextState)
+      }
+    }
+
+    for {
+      _ <- printState
+      decision <- promptHitOrStand.liftM[OptionT]
+      nextState <- decision match {
+        case Hit =>   handleHit
+        case Stand => handleStand
+      }
+    } yield nextState
+  }
+
+  def dealerTurn(state: DealerTurn): Option[GameFinished] = {
+    if (handValue(state.table.dealer) < 17) {
+      hit(state).flatMap(dealerTurn)
+    } else {
+      Some(stand(state))
+    }
+  }
+
+  def singleGame(deck: Deck): Game[Deck] = {
+
+    def printGameFinished(state: GameFinished): Game[Unit] = OptionT.some {
+      println(s"You: ${state.table.player} [${handValue(state.table.player)}]\n" ++
+        s"Dealer: ${state.table.dealer} [${handValue(state.table.dealer)}]")
+    }
+
+    for {
+      table <- OptionT(Task.now(initialTable(deck)))
+      initialState = PlayerTurn(table)
+      dealerState <- playerTurn(initialState)
+      finalState <- OptionT(Task.now(dealerTurn(dealerState)))
+      _ <- printGameFinished(finalState)
+    } yield finalState.table.deck
+  }
+
+  def untilTheDeckIsEmpty(deck: Deck): Game[Unit] = {
+    for {
+      nextDeck <-singleGame(deck)
+      _ <- untilTheDeckIsEmpty(nextDeck)
+    } yield ()
+  }
+
+  def blackjackDeal(numPlayers: Int) = deal(numPlayers+1, 2) _
 
   def initialTable(deck: Deck) = {
-    blackjackDeal(2)(deck).map { r => (r: @unchecked) match {
+    blackjackDeal(1)(deck).map { r => (r: @unchecked) match {
       case (hand1 :: hand2 :: Nil, undealt) => Table(dealer=hand2, player=hand1, deck=undealt)
     }}
   }
@@ -47,5 +160,11 @@ object blackjack {
 
   private implicit class NelOps[A](nel: NonEmptyList[A]) {
     def partition(pred: A => Boolean): (List[A], List[A]) = nel.list.toList.partition(pred)
+  }
+
+  def main(args: Array[String]): Unit = {
+    import deck._
+    val main = shuffleDeck(standardDeck).liftM[OptionT].flatMap(untilTheDeckIsEmpty).run
+    val outcome = main.unsafePerformSync
   }
 }

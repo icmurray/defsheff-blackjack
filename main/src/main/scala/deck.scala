@@ -37,6 +37,8 @@ object deck {
     }
   }
 
+  def dealOne(deck: Deck): Option[(Card, Deck)] = deck.headOption.map(card => (card, deck.tail))
+
   private def toNel[A](xs: List[A]): Option[NonEmptyList[A]] = xs match {
     case Nil       => None
     case x :: tail => Some(NonEmptyList(x, tail:_*))

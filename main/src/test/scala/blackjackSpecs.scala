@@ -2,9 +2,13 @@ package defsheff
 
 import scalaz.NonEmptyList
 
+import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
+import org.specs2.scalacheck.Parameters
 
-class blackjackSpecs extends Specification {
+import org.scalacheck._
+
+class blackjackSpecs extends Specification with ScalaCheck {
 
   import blackjack._
   import deck.standardDeck
@@ -35,16 +39,56 @@ class blackjackSpecs extends Specification {
         val deck = standardDeck
         blackjackDeal(0)(deck) must beSome (be_==((List(deck.take(2).toNelUnsafe), deck.drop(2))))
       }
+    }
 
-      //"Dealer deals themselves last" >> {
-      //  val deck = (1 to 10).toList
-      //  initialDeal(1)(deck) must_== ((List(List(1,3), List(2,4)), (5 to 10).toList))
-      //}
+    "hit" >> {
 
-      //"2 Players plus the dealer" >> {
-      //  val deck = (1 to 10).toList
-      //  initialDeal(2)(deck) must_== ((List(List(1,4), List(2,5), List(3,6)), (7 to 10).toList))
-      //}
+      "Non-empty deck" >> {
+
+        "deck has card removed from top" >> prop { (state: GameState) =>
+          (state.table.deck.nonEmpty) ==> {
+            blackjack.hit(state)
+              .map(_.deck) must beSome(be_==(state.deck.tail))
+          }
+        }
+
+        "PlayerTurn" >> {
+          "player gets a new card from the top of the deck" >> prop { (state: PlayerTurn) =>
+            (state.table.deck.nonEmpty) ==> {
+                val expectedHand = state.topOfDeckUnsafe :: state.playerHand
+                blackjack.hit(state)
+                  .map(_.playerHand) must beSome (contain(exactly(expectedHand:_*)))
+            }
+          }
+
+          "dealer hand unchanged" >> prop { (state: PlayerTurn) =>
+            (state.table.deck.nonEmpty) ==> {
+                blackjack.hit(state)
+                  .map(_.dealerHand) must beSome (be_==(state.dealerHand))
+            }
+          }
+        }
+
+        "DealerTurn" >> {
+          "dealer gets a new card from the top of the deck" >> prop { (state: DealerTurn) =>
+            (state.table.deck.nonEmpty) ==> {
+                val expectedHand = state.topOfDeckUnsafe :: state.dealerHand
+                blackjack.hit(state)
+                  .map(_.dealerHand) must beSome (contain(exactly(expectedHand:_*)))
+            }
+          }
+
+          "player hand unchanged" >> prop { (state: DealerTurn) =>
+            (state.table.deck.nonEmpty) ==> {
+                blackjack.hit(state)
+                  .map(_.playerHand) must beSome (be_==(state.playerHand))
+            }
+          }
+        }
+
+      }
+
+
     }
 
   }
@@ -73,6 +117,29 @@ class blackjackSpecs extends Specification {
     def toNelUnsafe: NonEmptyList[A] = l match {
       case head :: tail => NonEmptyList(head, tail:_*)
     }
+  }
+
+  val CardGen = Gen.oneOf(deck.standardDeck)
+  val HandGen = for {
+    card <- CardGen
+    cards <- Gen.listOf(CardGen)
+  } yield NonEmptyList(card, cards:_*)
+
+  val TableGen = for {
+    dealer <- HandGen
+    player <- HandGen
+    deck   <- Gen.listOf(CardGen)
+  } yield Table(dealer=dealer, player=player, deck=deck)
+
+  implicit val PlayerTurnArb = Arbitrary(TableGen.map(PlayerTurn.apply _))
+  implicit val DealerTurnArb = Arbitrary(TableGen.map(DealerTurn.apply _))
+  implicit val GameStateArb: Arbitrary[GameState]  = Arbitrary(Gen.oneOf(PlayerTurnArb.arbitrary, DealerTurnArb.arbitrary))
+
+  implicit class GameStateOps(state: GameState) {
+    def playerHand = state.table.player.list.toList
+    def dealerHand = state.table.dealer.list.toList
+    def deck = state.table.deck
+    def topOfDeckUnsafe = state.table.deck.head
   }
 
 }

@@ -26,7 +26,12 @@ libraryDependencies in ThisBuild += "org.specs2"     %% "specs2-scalacheck" % "3
 
 lazy val main = (project in file("main")).settings(
   libraryDependencies ++= Seq(
+
     "org.scalaz" %% "scalaz-core" % "7.2.2",
-    "org.scalaz" %% "scalaz-concurrent" % "7.2.2"
+    "org.scalaz" %% "scalaz-concurrent" % "7.2.2",
+
+    "com.github.julien-truffaut"  %%  "monocle-core"    % "1.2.0",
+    "com.github.julien-truffaut"  %%  "monocle-generic" % "1.2.0",
+    "com.github.julien-truffaut"  %%  "monocle-macro"   % "1.2.0"
   )
 )
