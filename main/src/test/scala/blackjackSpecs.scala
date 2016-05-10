@@ -14,7 +14,32 @@ class blackjackSpecs extends Specification with ScalaCheck {
   import deck.standardDeck
   import data._
 
-  "BlackJack" >> {
+  "blackjack" >> {
+
+    "Outcome" >> {
+      import scalaz.Order
+      "Pass Order laws" >> {
+        "antisymmetric" >> prop { (o1: Outcome, o2: Outcome) =>
+          Order[Outcome].orderLaw.antisymmetric(o1,o2) must beTrue
+        }
+        "transitive" >> prop { (o1: Outcome, o2: Outcome, o3: Outcome) =>
+          Order[Outcome].orderLaw.transitive(o1,o2,o3) must beTrue
+        }
+        "orderAndEqualConsistent" >> prop { (o1: Outcome, o2: Outcome) =>
+          Order[Outcome].orderLaw.orderAndEqualConsistent(o1,o2) must beTrue
+        }
+        "commutative" >> prop { (o1: Outcome, o2: Outcome) =>
+          Order[Outcome].orderLaw.commutative(o1,o2) must beTrue
+        }
+        "reflexive" >> prop { (o1: Outcome) =>
+          Order[Outcome].orderLaw.reflexive(o1) must beTrue
+        }
+        "naturality" >> prop { (o1: Outcome, o2: Outcome) =>
+          Order[Outcome].orderLaw.naturality(o1,o2) must beTrue
+        }
+      }
+    }
+
     "Hand Scores" >> {
       "2H 2C = 4" >> { parseHandForValue("2H 2C") must_== Score(4) }
       "2H 2C 2D 2S = 8" >> { parseHandForValue("2H 2C 2D 2S") must_== Score(8) }
@@ -141,5 +166,10 @@ class blackjackSpecs extends Specification with ScalaCheck {
     def deck = state.table.deck
     def topOfDeckUnsafe = state.table.deck.head
   }
+
+  val ScoreGen = Gen.choose(1,21).map(Score.apply _)
+  val BustGen  = Gen.choose(22,100).map(Bust.apply _)
+  val BlackjackGen = Gen.const(Blackjack)
+  implicit val OutcomeArb: Arbitrary[Outcome] = Arbitrary(Gen.oneOf(ScoreGen, BustGen, BlackjackGen))
 
 }
